@@ -6,9 +6,11 @@ import { HelloWorld } from "../typechain-types";
 // https://mochajs.org/#getting-started
 describe("HelloWorld", () => {
 	let helloWorldContract: HelloWorld;
+	let accounts: SignerWithAddress[];
 
 	// https://mochajs.org/#hooks
 	beforeEach(async function () {
+		accounts = await ethers.getSigners();
 		// https://hardhat.org/plugins/nomiclabs-hardhat-ethers.html#helpers
 		const helloWorldFactory = await ethers.getContractFactory("HelloWorld");
 		// https://docs.ethers.io/v5/api/contract/contract-factory/#ContractFactory-deploy
@@ -26,7 +28,7 @@ describe("HelloWorld", () => {
 
 	it("Should set owner to deployer account", async function () {
 		// https://hardhat.org/plugins/nomiclabs-hardhat-ethers.html#helpers
-		const accounts = await ethers.getSigners();
+
 		// https://docs.ethers.io/v5/api/contract/contract/#Contract-functionsCall
 		const contractOwner = await helloWorldContract.owner();
 		// https://www.chaijs.com/api/bdd/#method_equal
@@ -35,7 +37,7 @@ describe("HelloWorld", () => {
 
 	it("Should not allow anyone other than owner to call transferOwnership", async function () {
 		// https://hardhat.org/plugins/nomiclabs-hardhat-ethers.html#helpers
-		const accounts = await ethers.getSigners();
+
 		// https://docs.ethers.io/v5/api/contract/contract/#Contract-connect
 		// https://docs.ethers.io/v5/api/contract/contract/#contract-functionsSend
 		// https://hardhat.org/hardhat-chai-matchers/docs/overview#reverts
@@ -47,26 +49,26 @@ describe("HelloWorld", () => {
 	});
 
 	it("Should execute transferOwnership correctly", async function () {
-		const accounts = await ethers.getSigners();
+		const newOwner = accounts[1].address;
 
-		(await helloWorldContract.transferOwnership(accounts[1].address)).wait();
+		(await helloWorldContract.transferOwnership(newOwner)).wait();
 
 		const contractOwner = await helloWorldContract.owner();
-		expect(contractOwner).to.equal(accounts[1].address);
+		expect(contractOwner).to.equal(newOwner);
 	});
 
 	it("Should not allow anyone other than owner to change text", async function () {
-		// TODO
-		const accounts = await ethers.getSigners();
-
 		await expect(
-			helloWorldContract.connect(accounts[1]).setText("Hello World")
+			helloWorldContract.connect(accounts[1]).setText("")
 		).to.be.revertedWith("Caller is not the owner");
 	});
 
 	it("Should change text correctly", async function () {
-		const accounts = await ethers.getSigners();
 		// should change text correctly
-		await helloWorldContract.connect(accounts[0]).setText("Hello World");
+		const newText = "NEW_TEXT";
+		const tx = await helloWorldContract.setText(newText);
+		await tx.wait();
+		const helloWorldText = await helloWorldContract.helloWorld();
+		expect(newText).to.equal(helloWorldText);
 	});
 });
