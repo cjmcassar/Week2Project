@@ -12,16 +12,19 @@ async function main() {
 	};
 
 	const provider = ethers.getDefaultProvider("goerli", options);
+
 	//connect to Metamask wallet using seed phrase
 	const wallet = ethers.Wallet.fromMnemonic(process.env.MNEMONIC ?? "");
 	console.log(`Using address ${wallet.address}`);
 	const signer = wallet.connect(provider);
+
 	//make sure wallet contains ether
 	const balanceBN = await signer.getBalance();
 	const balance = Number(ethers.utils.formatEther(balanceBN));
 	if (balance < 0.01) {
 		throw new Error("Not enough ether");
 	}
+
 	//Deploy Ballot contract
 	console.log("Deploying Ballot contract");
 	const ballotFactory = new Ballot__factory(signer);
